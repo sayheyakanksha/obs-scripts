@@ -40,7 +40,7 @@ local function format_time(ms)
     local result = ""
 
     if show_hours then
-        result = string.format("%02d:%02d:%02d", hours, minutes, seconds)
+        result = string.format("%d:%02d:%02d", hours, minutes, seconds)
     else
         result = string.format("%02d:%02d", minutes, seconds)
     end
