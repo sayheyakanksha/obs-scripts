@@ -261,6 +261,7 @@ function script_description()
     return [[
 <h2>OBS Advanced Timer</h2>
 <p>A flexible count-up and countdown timer for OBS.</p>
+<p>Version 1.0.0, @sayheyakanksha</p>
 <ul>
 <li><b>Count Up</b> – Counts from 00:00:00:000 upward</li>
 <li><b>Countdown</b> – Counts down from a set duration to zero</li>

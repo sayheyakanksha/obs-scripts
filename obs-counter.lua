@@ -94,6 +94,7 @@ end
 function script_description()
     return [[
 <h2>OBS Counter</h2>
+<p>Version 1.0.0, @sayheyakanksha</p>
 <p>A simple counter that increments or decrements by 1.</p>
 <p>Add a text prefix and suffix around the number.</p>
 <p>Assign hotkeys in OBS Settings → Hotkeys for hands-free control.</p>
