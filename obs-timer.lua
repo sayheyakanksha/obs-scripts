@@ -15,10 +15,13 @@ local show_hours = true
 local show_milliseconds = true
 local prefix_text = ""
 local suffix_text = ""
+local countup_start_hours = 0
+local countup_start_minutes = 0
+local countup_start_seconds = 0
 local countdown_hours = 0
 local countdown_minutes = 5
 local countdown_seconds = 0
-local countdown_end_text = "00:00:00:000"
+local countdown_end_text = "00:00:00:00"
 local auto_reset = false
 local update_interval_ms = 10      -- how often to refresh display
 
@@ -43,7 +46,7 @@ local function format_time(ms)
     end
 
     if show_milliseconds then
-        result = result .. string.format(":%03d", millis)
+        result = result .. string.format(":%02d", math.floor(millis / 10))
     end
 
     return result
@@ -84,7 +87,8 @@ local function timer_tick()
 
     if timer_mode == "countup" then
         elapsed_ms = elapsed_ms + delta
-        set_text_source(format_time(elapsed_ms))
+        local start_offset = (countup_start_hours * 3600 + countup_start_minutes * 60 + countup_start_seconds) * 1000
+        set_text_source(format_time(start_offset + elapsed_ms))
     else
         -- Countdown
         elapsed_ms = elapsed_ms + delta
@@ -138,7 +142,8 @@ function timer_start(pressed)
         if timer_mode == "countdown" then
             set_text_source(format_time(countdown_target_ms))
         else
-            set_text_source(format_time(0))
+            local start_offset = (countup_start_hours * 3600 + countup_start_minutes * 60 + countup_start_seconds) * 1000
+            set_text_source(format_time(start_offset))
         end
     end
 
@@ -192,7 +197,8 @@ function timer_reset(pressed)
         countdown_target_ms = (countdown_hours * 3600 + countdown_minutes * 60 + countdown_seconds) * 1000
         set_text_source(format_time(countdown_target_ms))
     else
-        set_text_source(format_time(0))
+        local start_offset = (countup_start_hours * 3600 + countup_start_minutes * 60 + countup_start_seconds) * 1000
+        set_text_source(format_time(start_offset))
     end
 
     obs.script_log(obs.LOG_INFO, "Timer reset")
@@ -201,13 +207,8 @@ end
 -----------------------------------------------------------
 -- Button callbacks for the properties UI
 -----------------------------------------------------------
-local function on_start_clicked(props, p)
-    timer_start(true)
-    return false
-end
-
-local function on_pause_clicked(props, p)
-    timer_pause(true)
+local function on_start_pause_clicked(props, p)
+    timer_start_pause(true)
     return false
 end
 
@@ -244,7 +245,9 @@ end
 local function on_mode_changed(props, prop, settings)
     local mode = obs.obs_data_get_string(settings, "timer_mode")
     local is_countdown = (mode == "countdown")
+    local is_countup = (mode == "countup")
 
+    obs.obs_property_set_visible(obs.obs_properties_get(props, "countup_group"), is_countup)
     obs.obs_property_set_visible(obs.obs_properties_get(props, "countdown_group"), is_countdown)
 
     return true
@@ -282,6 +285,14 @@ function script_properties()
     obs.obs_property_list_add_string(mode_list, "Countdown", "countdown")
     obs.obs_property_set_modified_callback(mode_list, on_mode_changed)
 
+    -- Count Up settings group
+    local countup_group = obs.obs_properties_create()
+    obs.obs_properties_add_int(countup_group, "countup_start_hours", "Start Hours", 0, 99, 1)
+    obs.obs_properties_add_int(countup_group, "countup_start_minutes", "Start Minutes", 0, 59, 1)
+    obs.obs_properties_add_int(countup_group, "countup_start_seconds", "Start Seconds", 0, 59, 1)
+    obs.obs_properties_add_group(props, "countup_group", "Count Up Settings",
+        obs.OBS_GROUP_NORMAL, countup_group)
+
     -- Countdown settings group
     local countdown_group = obs.obs_properties_create()
     obs.obs_properties_add_int(countdown_group, "countdown_hours", "Hours", 0, 99, 1)
@@ -309,8 +320,7 @@ function script_properties()
     obs.obs_property_list_add_int(interval_list, "Seconds Only (1000ms)", 1000)
 
     -- Control buttons
-    obs.obs_properties_add_button(props, "start_button", "▶  Start", on_start_clicked)
-    obs.obs_properties_add_button(props, "pause_button", "⏸  Pause / Resume", on_pause_clicked)
+    obs.obs_properties_add_button(props, "start_pause_button", "▶ ⏸  Start / Pause", on_start_pause_clicked)
     obs.obs_properties_add_button(props, "reset_button", "⏹  Reset", on_reset_clicked)
 
     return props
@@ -319,10 +329,13 @@ end
 function script_defaults(settings)
     obs.obs_data_set_default_string(settings, "text_source", "")
     obs.obs_data_set_default_string(settings, "timer_mode", "countup")
+    obs.obs_data_set_default_int(settings, "countup_start_hours", 0)
+    obs.obs_data_set_default_int(settings, "countup_start_minutes", 0)
+    obs.obs_data_set_default_int(settings, "countup_start_seconds", 0)
     obs.obs_data_set_default_int(settings, "countdown_hours", 0)
     obs.obs_data_set_default_int(settings, "countdown_minutes", 5)
     obs.obs_data_set_default_int(settings, "countdown_seconds", 0)
-    obs.obs_data_set_default_string(settings, "countdown_end_text", "00:00:00:000")
+    obs.obs_data_set_default_string(settings, "countdown_end_text", "00:00:00:00")
     obs.obs_data_set_default_bool(settings, "auto_reset", false)
     obs.obs_data_set_default_bool(settings, "show_hours", true)
     obs.obs_data_set_default_bool(settings, "show_milliseconds", true)
@@ -334,6 +347,9 @@ end
 function script_update(settings)
     text_source_name = obs.obs_data_get_string(settings, "text_source")
     timer_mode = obs.obs_data_get_string(settings, "timer_mode")
+    countup_start_hours = obs.obs_data_get_int(settings, "countup_start_hours")
+    countup_start_minutes = obs.obs_data_get_int(settings, "countup_start_minutes")
+    countup_start_seconds = obs.obs_data_get_int(settings, "countup_start_seconds")
     countdown_hours = obs.obs_data_get_int(settings, "countdown_hours")
     countdown_minutes = obs.obs_data_get_int(settings, "countdown_minutes")
     countdown_seconds = obs.obs_data_get_int(settings, "countdown_seconds")
