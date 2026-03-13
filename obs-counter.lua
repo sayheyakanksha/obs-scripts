@@ -3,6 +3,11 @@ obs = obslua
 -- State
 local counter_value = 0
 
+-- Hotkey handles (global so they persist for saving)
+local hk_increment = nil
+local hk_decrement = nil
+local hk_reset = nil
+
 -- Settings
 local text_source_name = ""
 local prefix_text = ""
@@ -142,11 +147,11 @@ function script_load(settings)
     counter_value = start_value
 
     -- Register hotkeys
-    local hk_increment = obs.obs_hotkey_register_frontend("counter_increment",
+    hk_increment = obs.obs_hotkey_register_frontend("counter_increment",
         "Counter: Add 1", counter_increment)
-    local hk_decrement = obs.obs_hotkey_register_frontend("counter_decrement",
+    hk_decrement = obs.obs_hotkey_register_frontend("counter_decrement",
         "Counter: Subtract 1", counter_decrement)
-    local hk_reset = obs.obs_hotkey_register_frontend("counter_reset",
+    hk_reset = obs.obs_hotkey_register_frontend("counter_reset",
         "Counter: Reset", counter_reset)
 
     -- Load saved hotkey bindings
@@ -164,14 +169,13 @@ function script_load(settings)
 end
 
 function script_save(settings)
-    local hk_increment = obs.obs_hotkey_register_frontend("counter_increment",
-        "Counter: Add 1", counter_increment)
-    local hk_decrement = obs.obs_hotkey_register_frontend("counter_decrement",
-        "Counter: Subtract 1", counter_decrement)
-    local hk_reset = obs.obs_hotkey_register_frontend("counter_reset",
-        "Counter: Reset", counter_reset)
-
-    obs.obs_data_set_array(settings, "counter_increment", obs.obs_hotkey_save(hk_increment))
-    obs.obs_data_set_array(settings, "counter_decrement", obs.obs_hotkey_save(hk_decrement))
-    obs.obs_data_set_array(settings, "counter_reset", obs.obs_hotkey_save(hk_reset))
+    if hk_increment then
+        obs.obs_data_set_array(settings, "counter_increment", obs.obs_hotkey_save(hk_increment))
+    end
+    if hk_decrement then
+        obs.obs_data_set_array(settings, "counter_decrement", obs.obs_hotkey_save(hk_decrement))
+    end
+    if hk_reset then
+        obs.obs_data_set_array(settings, "counter_reset", obs.obs_hotkey_save(hk_reset))
+    end
 end

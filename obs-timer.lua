@@ -8,6 +8,10 @@ local last_tick = 0
 local countdown_target_ms = 0
 local countdown_finished = false
 
+-- Hotkey handles (global so they persist for saving)
+local hotkey_start_pause = nil
+local hotkey_reset = nil
+
 -- Settings values
 local text_source_name = ""
 local timer_mode = "countup"       -- "countup" or "countdown"
@@ -368,9 +372,9 @@ end
 
 function script_load(settings)
     -- Register hotkeys
-    local hotkey_start_pause = obs.obs_hotkey_register_frontend("timer_start_pause",
+    hotkey_start_pause = obs.obs_hotkey_register_frontend("timer_start_pause",
         "Timer: Start / Pause", timer_start_pause)
-    local hotkey_reset = obs.obs_hotkey_register_frontend("timer_reset",
+    hotkey_reset = obs.obs_hotkey_register_frontend("timer_reset",
         "Timer: Reset", timer_reset)
 
     -- Load saved hotkey bindings
@@ -385,13 +389,12 @@ function script_load(settings)
 end
 
 function script_save(settings)
-    local hotkey_start_pause = obs.obs_hotkey_register_frontend("timer_start_pause",
-        "Timer: Start / Pause", timer_start_pause)
-    local hotkey_reset = obs.obs_hotkey_register_frontend("timer_reset",
-        "Timer: Reset", timer_reset)
-
-    obs.obs_data_set_array(settings, "timer_start_pause", obs.obs_hotkey_save(hotkey_start_pause))
-    obs.obs_data_set_array(settings, "timer_reset", obs.obs_hotkey_save(hotkey_reset))
+    if hotkey_start_pause then
+        obs.obs_data_set_array(settings, "timer_start_pause", obs.obs_hotkey_save(hotkey_start_pause))
+    end
+    if hotkey_reset then
+        obs.obs_data_set_array(settings, "timer_reset", obs.obs_hotkey_save(hotkey_reset))
+    end
 end
 
 function script_unload()
