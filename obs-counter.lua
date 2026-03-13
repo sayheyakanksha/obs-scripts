@@ -162,3 +162,16 @@ function script_load(settings)
     obs.obs_data_array_release(key_dec)
     obs.obs_data_array_release(key_reset)
 end
+
+function script_save(settings)
+    local hk_increment = obs.obs_hotkey_register_frontend("counter_increment",
+        "Counter: Add 1", counter_increment)
+    local hk_decrement = obs.obs_hotkey_register_frontend("counter_decrement",
+        "Counter: Subtract 1", counter_decrement)
+    local hk_reset = obs.obs_hotkey_register_frontend("counter_reset",
+        "Counter: Reset", counter_reset)
+
+    obs.obs_data_set_array(settings, "counter_increment", obs.obs_hotkey_save(hk_increment))
+    obs.obs_data_set_array(settings, "counter_decrement", obs.obs_hotkey_save(hk_decrement))
+    obs.obs_data_set_array(settings, "counter_reset", obs.obs_hotkey_save(hk_reset))
+end

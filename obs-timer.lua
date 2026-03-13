@@ -372,30 +372,26 @@ function script_load(settings)
         "Timer: Start / Pause", timer_start_pause)
     local hotkey_reset = obs.obs_hotkey_register_frontend("timer_reset",
         "Timer: Reset", timer_reset)
-    local hotkey_start = obs.obs_hotkey_register_frontend("timer_start_only",
-        "Timer: Start", timer_start)
-    local hotkey_pause = obs.obs_hotkey_register_frontend("timer_pause_only",
-        "Timer: Pause / Resume", timer_pause)
 
     -- Load saved hotkey bindings
     local key_start_pause = obs.obs_data_get_array(settings, "timer_start_pause")
     local key_reset = obs.obs_data_get_array(settings, "timer_reset")
-    local key_start = obs.obs_data_get_array(settings, "timer_start_only")
-    local key_pause = obs.obs_data_get_array(settings, "timer_pause_only")
 
     obs.obs_hotkey_load(hotkey_start_pause, key_start_pause)
     obs.obs_hotkey_load(hotkey_reset, key_reset)
-    obs.obs_hotkey_load(hotkey_start, key_start)
-    obs.obs_hotkey_load(hotkey_pause, key_pause)
 
     obs.obs_data_array_release(key_start_pause)
     obs.obs_data_array_release(key_reset)
-    obs.obs_data_array_release(key_start)
-    obs.obs_data_array_release(key_pause)
 end
 
 function script_save(settings)
-    -- Hotkey save is handled automatically by OBS
+    local hotkey_start_pause = obs.obs_hotkey_register_frontend("timer_start_pause",
+        "Timer: Start / Pause", timer_start_pause)
+    local hotkey_reset = obs.obs_hotkey_register_frontend("timer_reset",
+        "Timer: Reset", timer_reset)
+
+    obs.obs_data_set_array(settings, "timer_start_pause", obs.obs_hotkey_save(hotkey_start_pause))
+    obs.obs_data_set_array(settings, "timer_reset", obs.obs_hotkey_save(hotkey_reset))
 end
 
 function script_unload()
